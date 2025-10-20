@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, redirect, url_for
+
 import sqlite3
 import os
 
@@ -35,7 +36,7 @@ def index():
             db = get_db()
             db.execute('INSERT INTO contacts (name, phone) VALUES (?, ?)', (name, phone))
             db.commit()
-            message = 'Contact added successfully.'
+            return redirect(url_for('index'))  
         else:
             message = 'Missing name or phone number.'
 

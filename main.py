@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify, render_template_string, redirect, url_for
-
+from flask import Flask, request, jsonify, render_template_string, redirect, url_for, flash
 import sqlite3
 import os
 
 app = Flask(__name__)
+app.secret_key = 'supersecretkey'  # Needed for flash messages
 
 # Database file path
 DATABASE = 'demo.db'
@@ -27,8 +27,7 @@ def init_db():
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    message = ''  # Message indicating the result of the operation
-    contacts = []
+    message = ''  # Local message variable
     if request.method == 'POST':
         name = request.form.get('name')
         phone = request.form.get('phone')
@@ -36,9 +35,10 @@ def index():
             db = get_db()
             db.execute('INSERT INTO contacts (name, phone) VALUES (?, ?)', (name, phone))
             db.commit()
-            return redirect(url_for('index'))  
+            flash('Contact added successfully.')
+            return redirect(url_for('index'))  # <--- Prevents duplicate inserts
         else:
-            message = 'Missing name or phone number.'
+            flash('Missing name or phone number.')
 
     # Always display the contacts table
     db = get_db()
@@ -60,7 +60,17 @@ def index():
                 <input type="text" id="phone" name="phone" required><br><br>
                 <input type="submit" value="Submit">
             </form>
-            <p>{{ message }}</p>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <ul style="color: green;">
+                        {% for msg in messages %}
+                            <li>{{ msg }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
             {% if contacts %}
                 <table border="1">
                     <tr>
